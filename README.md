@@ -1,2 +1,2 @@
-###Snake Extension for Google Chrom
+### Snake Extension for Google Chrome
 

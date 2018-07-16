@@ -22,24 +22,23 @@ window.onload = function() {
 		highscoreHard = e.highscoreHard;
 	});
 };
-norm.addEventListener("click", function() {
+function toggleDifficulty(d, s, bs) {
 	clearInterval(flashing);
 	highscoree.style.display = "initial";
+	difficulty = d;
+	speed = s;
+	bodySpeed = bs;
+}
+norm.addEventListener("click", function() {
+	toggleDifficulty(0, 1, 110);
 	norm.style.color = "gray";
 	hard.style.color = "white";
-	difficulty = 0;
-	speed = 1;
-	bodySpeed = 110;
 	highscoree.innerText = highscore;
 });
 hard.addEventListener("click", function() {
-	clearInterval(flashing);
-	highscoree.style.display = "initial";
+	toggleDifficulty(1, 2, 50);
 	hard.style.color = "gray";
 	norm.style.color = "white";
-	difficulty = 1;
-	speed = 2;
-	bodySpeed = 50;
 	highscoree.innerText = highscoreHard;
 });
 highscoree.addEventListener("flash", function() {
@@ -54,6 +53,10 @@ highscoree.addEventListener("flash", function() {
 		}
 	}, 400);
 });
+function flashScore() {
+	highscoree.innerText = score;
+	highscoree.dispatchEvent(flash);
+}
 function gameOver() {
 	start = 0;
 	food.style.display = "none";
@@ -65,23 +68,20 @@ function gameOver() {
 		for (var i = mids.length-1; i >= 0; i--) {
 			mids[i].remove();
 		}
-		tail.style.transform = "none";
 		setTimeout(function() {
 			gameover.style.display = "none";
 			if (difficulty) {
 				if (score > highscoreHard) {
 					chrome.storage.sync.set({highscoreHard: score});
-					highscoree.innerText = score;
 					highscoreHard = score;
-					highscoree.dispatchEvent(flash);
+					flashScore();
 				}
 			}
 			else {
 				if (score > highscore) {
 					chrome.storage.sync.set({highscore: score});
-					highscoree.innerText = score;
 					highscore = score;
-					highscoree.dispatchEvent(flash);
+					flashScore();
 				}
 			}
 			scoree.innerText = 0;
@@ -102,25 +102,42 @@ function gameOver() {
 		}, 1500);
 	}, 400);
 }
-function checkCollisions() {
+function foodCollision() {
 	if (x > food.x-7 && x < food.x+7 && y > food.y-7 && y < food.y+7) {
-		setFood();
-		scoree.innerText = ++score;
-		mid0.insertAdjacentHTML("afterend", "<span class=\"sb mids\" id=\"mid"+score+"\">&#9632;</span>");
-		var e = document.getElementById("mid"+score);
-		e.style.transform = "translate("+mid0.x+"px,"+mid0.y+"px)";
-		e.x = mid0.x;
-		e.y = mid0.y;
+		return 1;
 	}
+	return 0;
+}
+function wallCollision() {
 	if (x >= 83 || x <= -3 || y >= 76 || y <= -11) {
-		gameOver();
-		return 0;
+		return 1;
 	}
+	return 0;
+}
+function selfCollision() {
 	for (var i = mid0; i.id != "food"; i = i.nextElementSibling) {
 		if (x > i.x-4 && x < i.x+4 && y > i.y-4 && y < i.y+4) {
-			gameOver();
-			return 0;
+			return 1;
 		}
+	}
+	return 0;
+}
+function snakeGrow() {
+	scoree.innerText = ++score;
+	mid0.insertAdjacentHTML("afterend", "<span class=\"sb mids\" id=\"mid"+score+"\">&#9632;</span>");
+	var e = document.getElementById("mid"+score);
+	e.style.transform = "translate("+mid0.x+"px,"+mid0.y+"px)";
+	e.x = mid0.x;
+	e.y = mid0.y;
+}
+function checkCollisions() {
+	if (foodCollision()) {
+		setFood();
+		snakeGrow();
+	}
+	if (wallCollision() || selfCollision()) {
+		gameOver();
+		return 0;
 	}
 	return 1;
 }
