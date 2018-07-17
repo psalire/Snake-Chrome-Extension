@@ -3,26 +3,29 @@
 <head>
 <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
 <style>
+.label {font-size: 0.75em;}
+#highscore {display: initial;}
+.container, #gameover {text-align: center;}
+#play {border-bottom: 0;}
+#hard {border-left: 0;}
+.container {margin: 0;}
+#snake_box, .label {margin: 5px;}
 body, button {
 	font-family: "Press Start 2P", sans-serif;
 	color: white;
 	background-color: black;
 }
 body {
+	width: 106px;
 	padding: 8px;
 	user-select: none;
 }
-.label {
-	font-size: 0.75em;
-}
-#highscore {
-	display: initial;
-}
 button {
 	height: 30px;
-	font-size: 1em;
-	margin: 0;
 	border: 2px solid;
+}
+#play {
+	font-size: 1.05em;
 }
 #snake_box {
 	position: relative;
@@ -32,33 +35,20 @@ button {
 	width: 90px;
 	border: 2px solid Lime;
 }
-#snake_box, .label {
-	margin: 5px;
-}
-#container, #container2, #gameover {
-	text-align: center;
-}
 #normal, #hard {
-	font-size: 0.82em;
+	font-size: 0.84em;
 	height: 20px;
-}
-#play {
-	border-bottom: 0;
-}
-#hard {
-	border-left: 0;
 }
 #normal {
 	border-right: solid gray;
 	color: gray;
 }
-#container2, #container {
-	margin: 0;
-}
-#container2 {
+.container {
 	display: flex;
 	flex-direction: row;
-	width: 100%;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
 }
 #gameover {
 	font-size: 0.9em;
@@ -84,17 +74,19 @@ button {
 <body>
 	<div class="label">High Score: <span id="highscore">0</span></div>
 	<div class="label">Score: <span id="score">0</span></div>
-	<div class="label" id="container"><button id="play">Play Snake!</button></div>
-	<div class="label" id="container2">
+	<div class="label container"><button id="play">Play Snake!</button></div>
+	<div class="label container">
 		<button id="normal">Normal</button>
 		<button id="hard">Hard</button>
 	</div>
 	<div id="snake_box">
-		<div id="gameover">GAMEOVER</div>
-		<span class="sb" id="head">&#9632;</span>
-		<span class="sb" id="mid0">&#9632;</span>
-		<span class="sb" id="tail">&#9632;</span>
-		<span id="food">&#9632;</span>
+		<div>
+			<div id="gameover">GAMEOVER</div>
+			<span class="sb" id="head">&#9632;</span>
+			<span class="sb" id="mid0">&#9632;</span>
+			<span class="sb" id="tail">&#9632;</span>
+			<span id="food">&#9632;</span>
+		</div>
 	</div>
 	<script src="popup.js"></script>
 </body>
