@@ -1,7 +1,7 @@
 {
-	"name": "Snake!",
+	"name": "Snake",
 	"version": "1.0",
-	"description": "Snake",
+	"description": "Play Snake!",
 	"manifest_version": 2,
 	"permissions": ["storage"],
 	"background": {
