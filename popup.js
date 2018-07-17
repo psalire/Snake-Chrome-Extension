@@ -11,7 +11,7 @@ let play=document.getElementById("play"),
 	flash=new Event("flash"),
 	difficulty=0,
 	speed=1,
-	bodySpeed=110,
+	bodySpeed=113,
 	moving,start,x,y,score,highscore,dir,anim,flashing,highscoreHard;
 window.onload = function() {
 	chrome.storage.sync.get("highscore", function(e) {
@@ -30,15 +30,19 @@ function toggleDifficulty(d, s, bs) {
 	bodySpeed = bs;
 }
 norm.addEventListener("click", function() {
-	toggleDifficulty(0, 1, 110);
+	toggleDifficulty(0, 1, 113);
 	norm.style.color = "gray";
 	hard.style.color = "white";
+	norm.style.borderColor = "gray";
+	hard.style.borderColor = "white";
 	highscoree.innerText = highscore;
 });
 hard.addEventListener("click", function() {
-	toggleDifficulty(1, 2, 50);
+	toggleDifficulty(1, 2, 45);
 	hard.style.color = "gray";
 	norm.style.color = "white";
+	hard.style.borderColor = "gray";
+	norm.style.borderColor = "white";
 	highscoree.innerText = highscoreHard;
 });
 highscoree.addEventListener("flash", function() {
@@ -92,9 +96,13 @@ function gameOver() {
 			play.style.borderColor = "white";
 			if (difficulty) {
 				norm.style.color = "white";
+				norm.style.borderColor = "white";
+				hard.style.color = "gray";
 			}
 			else {
 				hard.style.color = "white";
+				hard.style.borderColor = "white";
+				norm.style.color = "gray";
 			}
 			play.disabled = false;
 			norm.disabled = false;
@@ -109,7 +117,7 @@ function foodCollision() {
 	return 0;
 }
 function wallCollision() {
-	if (x >= 83 || x <= -3 || y >= 76 || y <= -11) {
+	if (x >= 83 || x <= -2 || y >= 74 || y <= -10) {
 		return 1;
 	}
 	return 0;
@@ -241,8 +249,7 @@ document.addEventListener("keydown", function(e) {
 		}
 	}
 });
-play.addEventListener("click", function(e) {
-	e.preventDefault();
+function initializeVals() {
 	start = 1;
 	score = 0;
 	x = 0;
@@ -255,7 +262,21 @@ play.addEventListener("click", function(e) {
 	hard.disabled = true;
 	play.style.color = "gray";
 	play.style.borderColor = "gray";
-	norm.style.color = "gray";
-	hard.style.color = "gray";
+	if (difficulty) {
+		hard.style.color = "Lime";
+		hard.style.borderColor = "gray";
+		norm.style.borderColor = "gray";
+		norm.style.color = "gray";
+	}
+	else {
+		norm.style.color = "Lime";
+		norm.style.borderColor = "gray";
+		hard.style.borderColor = "gray";
+		hard.style.color = "gray";
+	}
+}
+play.addEventListener("click", function(e) {
+	e.preventDefault();
+	initializeVals();
 	newDirection("r", moveRight);
 });
