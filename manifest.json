@@ -11,5 +11,12 @@
 	"browser_action": {
 		"default_title": "Snake!",
 		"default_popup": "popup.html"
+	},
+	"icons": {
+		"16": "s16.png",
+		"32": "s32.png",
+		"48": "s48.png",
+		"64": "s64.png",
+		"128": "s128.png"
 	}
 }
