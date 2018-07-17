@@ -1,6 +1,6 @@
 ### Snake Extension for Google Chrome
 
-https://chrome.google.com/webstore/detail/snake/goicnfoaggodccboajidgdckohdpfmib
+[View on Chrome webstore](https://chrome.google.com/webstore/detail/snake/goicnfoaggodccboajidgdckohdpfmib)
 
 Select difficulty and play. Use arrow keys to control.
 
