@@ -1,143 +1,191 @@
-let play=document.getElementById("play"),
-	tail=document.getElementById("tail"),
-	head=document.getElementById("head"),
-	food=document.getElementById("food"),
-	mid0=document.getElementById("mid0"),
-	norm=document.getElementById("normal"),
-	hard=document.getElementById("hard"),
-	scoree=document.getElementById("score"),
-	gameover=document.getElementById("gameover"),
-	highscoree=document.getElementById("highscore"),
-	flash=new Event("flash"),
-	difficulty=0,
-	speed=1,
-	bodySpeed=113,
-	moving,start,x,y,score,highscore,dir,anim,flashing,highscoreHard;
+// Philip Salire
+
+	/* Elements for head, tail and body of snake */
+let snake_tail = document.getElementById("tail"),
+	snake_head = document.getElementById("head"),
+	snake_body = document.getElementById("mid0"),
+	
+	/* Snake's direction denoted by 'r' 'l' 'u' or 'd' */
+	snake_direction = "r",
+	
+	/* Snake's x and y location */
+	x = 0, y = 0,
+	
+	/* Snake's food */
+	food = document.getElementById("food"),
+	
+	/* User buttons */
+	play_button = document.getElementById("play"),
+	normal_button = document.getElementById("normal"),
+	hard_button = document.getElementById("hard"),
+	score_display = document.getElementById("score"),
+	
+	/* Text displays for game over and high score */
+	gameover_display = document.getElementById("gameover"),
+	highscore_display = document.getElementById("highscore"),
+	
+	/* Event for flashing the score and interval for flashing */
+	flash_score_event = new Event("flash"),
+	flashing_interval,
+	
+	/* Difficulty: 0 for easy, 1 for hard */
+	game_difficulty = 0,
+	
+	/* Snake movement speed, increment offset by this amount */
+	snake_speed = 1,
+	
+	/* Interval time between each body element movement */
+	body_time_interval = 113,
+	
+	/* animationFrames for snake movement  */
+	snake_body_animationFrame,
+	snake_move_animationFrame,
+	
+	/* Game start boolean */
+	game_start = false,
+	
+	/* Current score and high score */
+	game_score = 0,
+	highscore_easy = 0,
+	highscore_hard = 0;
+	
+/* Load highscores when window opened */
 window.onload = function() {
 	chrome.storage.sync.get("highscore", function(e) {
-		highscore = e.highscore;
-		highscoree.innerText = e.highscore;
+		highscore_easy = e.highscore;
+		highscore_display.innerText = e.highscore;
 	});
 	chrome.storage.sync.get("highscoreHard", function(e) {
-		highscoreHard = e.highscoreHard;
+		highscore_hard = e.highscoreHard;
 	});
 };
-function toggleDifficulty(d, s, bs) {
-	clearInterval(flashing);
-	highscoree.style.display = "initial";
-	difficulty = d;
-	speed = s;
-	bodySpeed = bs;
+/* Toggle between easy (0) and hard difficulty (1) */
+function toggleDifficulty(difficulty, speed, body_speed) {
+	clearInterval(flashing_interval);
+	highscore_display.style.display = "initial";
+	game_difficulty = difficulty;
+	snake_speed = speed;
+	body_time_interval = body_speed;
 }
-norm.addEventListener("click", function() {
+/* Click normal difficulty button */
+normal_button.addEventListener("click", function() {
 	toggleDifficulty(0, 1, 113);
-	norm.style.color = "gray";
-	hard.style.color = "white";
-	norm.style.borderColor = "gray";
-	hard.style.borderColor = "white";
-	highscoree.innerText = highscore;
+	normal_button.style.color = "gray";
+	hard_button.style.color = "white";
+	normal_button.style.borderColor = "gray";
+	hard_button.style.borderColor = "white";
+	highscore_display.innerText = highscore_easy;
 });
-hard.addEventListener("click", function() {
+/* Click hard difficulty button */
+hard_button.addEventListener("click", function() {
 	toggleDifficulty(1, 2, 45);
-	hard.style.color = "gray";
-	norm.style.color = "white";
-	hard.style.borderColor = "gray";
-	norm.style.borderColor = "white";
-	highscoree.innerText = highscoreHard;
+	hard_button.style.color = "gray";
+	normal_button.style.color = "white";
+	hard_button.style.borderColor = "gray";
+	normal_button.style.borderColor = "white";
+	highscore_display.innerText = highscore_hard;
 });
-highscoree.addEventListener("flash", function() {
+/* Event to flash the highscore when changed */
+highscore_display.addEventListener("flash", function() {
 	var i = 0;
-	clearInterval(flashing);
-	highscoree.style.display = "none";
-	flashing = setInterval(function() {
-		highscoree.style.display = highscoree.style.display == "none" ? "initial" : "none";
+	clearInterval(flashing_interval);
+	highscore_display.style.display = "none";
+	flashing_interval = setInterval(function() {
+		highscore_display.style.display = highscore_display.style.display == "none" ? "initial" : "none";
 		if (i++ == 8) {
-			clearInterval(flashing);
+			clearInterval(flashing_interval);
 			return;
 		}
 	}, 400);
 });
+/* Activate flashing highscore event */
 function flashScore() {
-	highscoree.innerText = score;
-	highscoree.dispatchEvent(flash);
+	highscore_display.innerText = game_score;
+	highscore_display.dispatchEvent(flash);
 }
+/* Game is done, reset elements and check highscores */
 function gameOver() {
-	start = 0;
+	game_start = false;
 	food.style.display = "none";
-	gameover.style.display = "initial";
+	gameover_display.style.display = "initial";
 	setTimeout(function() {
-		cancelAnimationFrame(moving);
-		cancelAnimationFrame(anim);
+		cancelAnimationFrame(snake_body_animationFrame);
+		cancelAnimationFrame(snake_move_animationFrame);
 		var mids = document.getElementsByClassName("mids");
 		for (var i = mids.length-1; i >= 0; i--) {
 			mids[i].remove();
 		}
 		setTimeout(function() {
-			gameover.style.display = "none";
-			if (difficulty) {
-				if (score > highscoreHard) {
-					chrome.storage.sync.set({highscoreHard: score});
-					highscoreHard = score;
+			gameover_display.style.display = "none";
+			if (game_difficulty) {
+				if (game_score > highscore_hard) {
+					chrome.storage.sync.set({highscoreHard: game_score});
+					highscore_hard = game_score;
 					flashScore();
 				}
 			}
 			else {
-				if (score > highscore) {
-					chrome.storage.sync.set({highscore: score});
-					highscore = score;
+				if (game_score > highscore_easy) {
+					chrome.storage.sync.set({highscore: game_score});
+					highscore_easy = game_score;
 					flashScore();
 				}
 			}
-			scoree.innerText = 0;
-			head.style.transform = "none";
-			mid0.style.transform = "none";
-			tail.style.transform = "none";
-			play.style.color = "white";
-			play.style.borderColor = "white";
-			if (difficulty) {
-				norm.style.color = "white";
-				norm.style.borderColor = "white";
-				hard.style.color = "gray";
+			score_display.innerText = 0;
+			snake_head.style.transform = "none";
+			snake_body.style.transform = "none";
+			snake_tail.style.transform = "none";
+			play_button.style.color = "white";
+			play_button.style.borderColor = "white";
+			if (game_difficulty) {
+				normal_button.style.color = "white";
+				normal_button.style.borderColor = "white";
+				hard_button.style.color = "gray";
 			}
 			else {
-				hard.style.color = "white";
-				hard.style.borderColor = "white";
-				norm.style.color = "gray";
+				hard_button.style.color = "white";
+				hard_button.style.borderColor = "white";
+				normal_button.style.color = "gray";
 			}
-			play.disabled = false;
-			norm.disabled = false;
-			hard.disabled = false;
+			play_button.disabled = false;
+			normal_button.disabled = false;
+			hard_button.disabled = false;
 		}, 1500);
 	}, 400);
 }
+/* Check if snake eats food */
 function foodCollision() {
 	if (x > food.x-7 && x < food.x+7 && y > food.y-7 && y < food.y+7) {
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
+/* Check if snake hits wall */
 function wallCollision() {
 	if (x >= 83 || x <= -2 || y >= 74 || y <= -10) {
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
+/* Check if snake eats self */
 function selfCollision() {
-	for (var i = mid0; i.id != "food"; i = i.nextElementSibling) {
+	for (var i = snake_body; i.id != "food"; i = i.nextElementSibling) {
 		if (x > i.x-4 && x < i.x+4 && y > i.y-4 && y < i.y+4) {
-			return 1;
+			return true;
 		}
 	}
-	return 0;
+	return false;
 }
+/* Add body element to snake and increment score */
 function snakeGrow() {
-	scoree.innerText = ++score;
-	mid0.insertAdjacentHTML("afterend", "<span class=\"sb mids\" id=\"mid"+score+"\">&#9632;</span>");
-	var e = document.getElementById("mid"+score);
-	e.style.transform = "translate("+mid0.x+"px,"+mid0.y+"px)";
-	e.x = mid0.x;
-	e.y = mid0.y;
+	score_display.innerText = ++game_score;
+	snake_body.insertAdjacentHTML("afterend", "<span class=\"sb mids\" id=\"mid"+game_score+"\">&#9632;</span>");
+	var e = document.getElementById("mid"+game_score);
+	e.style.transform = "translate("+snake_body.x+"px,"+snake_body.y+"px)";
+	e.x = snake_body.x;
+	e.y = snake_body.y;
 }
+/* Check food, wall, and self collisions */
 function checkCollisions() {
 	if (foodCollision()) {
 		setFood();
@@ -149,13 +197,14 @@ function checkCollisions() {
 	}
 	return 1;
 }
+/* Set new position of food */
 function setFood() {
 	for (;;) {
 		var l = Math.random()*82-2;
 		var t = Math.random()*75-4;
-		for (var i = head; i.id != "food"; i = i.nextElementSibling) {
+		for (var i = snake_head; i.id != "food"; i = i.nextElementSibling) {
 			if (l > i.x-10 && l < i.x+10 && t < i.y+10 && t > i.y-10) {
-				i = head;
+				i = snake_head;
 				l = Math.random()*82-2;
 				t = Math.random()*75-4;
 				continue;
@@ -167,10 +216,11 @@ function setFood() {
 		return;
 	}
 }
+/* Snake's body follows the head */
 function moveBody(xp, yp) {
-	var elm = mid0;
+	var elm = snake_body;
 	var moveB = setInterval(function() {
-		moving = window.requestAnimationFrame(function() {
+		snake_body_animationFrame = window.requestAnimationFrame(function() {
 			elm.style.transform = "translate("+xp+"px,"+yp+"px)"
 			elm.x = xp;
 			elm.y = yp;
@@ -179,103 +229,108 @@ function moveBody(xp, yp) {
 				clearInterval(moveB);
 			}
 		});
-	}, bodySpeed);
+	}, body_time_interval);
 }
+/* Move head and body of snake */
 function moveSnake() {
-	head.x = x;
-	head.y = y;
+	snake_head.x = x;
+	snake_head.y = y;
 	moveBody(x, y);
 }
+/* Move snake right, left, up, down */
 function moveRight() {
-	x += speed;
-	head.style.transform = "translate("+x+"px,"+y+"px)";
+	x += snake_speed;
+	snake_head.style.transform = "translate("+x+"px,"+y+"px)";
 	moveSnake();
 	if (checkCollisions()) {
-		anim = window.requestAnimationFrame(moveRight);
+		snake_move_animationFrame = window.requestAnimationFrame(moveRight);
 	}
 }
 function moveLeft() {
-	x -= speed;
-	head.style.transform = "translate("+x+"px,"+y+"px)";
+	x -= snake_speed;
+	snake_head.style.transform = "translate("+x+"px,"+y+"px)";
 	moveSnake();
 	if (checkCollisions()) {
-		anim = window.requestAnimationFrame(moveLeft);
+		snake_move_animationFrame = window.requestAnimationFrame(moveLeft);
 	}
 }
 function moveUp() {
-	y -= speed;
-	head.style.transform = "translate("+x+"px,"+y+"px)";
+	y -= snake_speed;
+	snake_head.style.transform = "translate("+x+"px,"+y+"px)";
 	moveSnake();
 	if (checkCollisions()) {
-		anim = window.requestAnimationFrame(moveUp);
+		snake_move_animationFrame = window.requestAnimationFrame(moveUp);
 	}
 }
 function moveDown() {
-	y += speed;
-	head.style.transform = "translate("+x+"px,"+y+"px)";
+	y += snake_speed;
+	snake_head.style.transform = "translate("+x+"px,"+y+"px)";
 	moveSnake();
 	if (checkCollisions()) {
-		anim = window.requestAnimationFrame(moveDown);
+		snake_move_animationFrame = window.requestAnimationFrame(moveDown);
 	}
 }
-function newDirection(d, ftn) {
-	cancelAnimationFrame(anim);
-	dir = d;
-	anim = window.requestAnimationFrame(ftn);
+/* Snake change of direction */
+function newDirection(direction, fun) {
+	cancelAnimationFrame(snake_move_animationFrame);
+	snake_direction = direction;
+	snake_move_animationFrame = window.requestAnimationFrame(fun);
 }
+/* Track up, down, left, right key presses */
 document.addEventListener("keydown", function(e) {
-	if (start) {
+	if (game_start) {
 		e.preventDefault();
 		switch(e.keyCode) {
 			case 37:
-				if (dir != "l" && dir != "r") {
+				if (snake_direction != "l" && snake_direction != "r") {
 					newDirection("l", moveLeft);
 				}
 				break;
 			case 38:
-				if (dir != "u" && dir != "d") {
+				if (snake_direction != "u" && snake_direction != "d") {
 					newDirection("u", moveUp);
 				}
 				break;
 			case 39:
-				if (dir != "r" && dir != "l") {
+				if (snake_direction != "r" && snake_direction != "l") {
 					newDirection("r", moveRight);
 				}
 				break;
 			case 40:
-				if (dir != "d" && dir != "u") {
+				if (snake_direction != "d" && snake_direction != "u") {
 					newDirection("d", moveDown);
 				}
 		}
 	}
 });
+/* Initialize global values */
 function initializeVals() {
-	start = 1;
-	score = 0;
+	game_start = true;
+	game_score = 0;
 	x = 0;
 	y = 0;
-	dir = 0;
 	food.style.display = "initial";
 	setFood();
-	play.disabled = true;
-	norm.disabled = true;
-	hard.disabled = true;
-	play.style.color = "gray";
-	play.style.borderColor = "gray";
-	if (difficulty) {
-		hard.style.color = "Lime";
-		hard.style.borderColor = "gray";
-		norm.style.borderColor = "gray";
-		norm.style.color = "gray";
+	play_button.disabled = true;
+	normal_button.disabled = true;
+	hard_button.disabled = true;
+	play_button.style.color = "gray";
+	play_button.style.borderColor = "gray";
+	if (game_difficulty) {
+		hard_button.style.color = "Lime";
+		hard_button.style.borderColor = "gray";
+		normal_button.style.borderColor = "gray";
+		normal_button.style.color = "gray";
 	}
 	else {
-		norm.style.color = "Lime";
-		norm.style.borderColor = "gray";
-		hard.style.borderColor = "gray";
-		hard.style.color = "gray";
+		normal_button.style.color = "Lime";
+		normal_button.style.borderColor = "gray";
+		hard_button.style.borderColor = "gray";
+		hard_button.style.color = "gray";
 	}
 }
-play.addEventListener("click", function(e) {
+/* Click play button */
+play_button.addEventListener("click", function(e) {
 	e.preventDefault();
 	initializeVals();
 	newDirection("r", moveRight);
